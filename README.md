@@ -398,6 +398,201 @@ After implementing the rules mentioned above
 
 # Section 4 - Pre-layout timing analysis and importance of good clock tree
 
+**Change directory to vsdstdcelldesign**
+
+cd Desktop/work/tools/openlane_working_dir/openlane/vsdstdcelldesign
+
+**Command to open custom inverter layout in magic**
+
+magic -T sky130A.tech sky130_inv.mag &
+
+![Screenshot 2024-06-02 070722](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/dd468a9a-8b26-4e0e-a083-3648c9dfb581)
+
+**Get syntax for grid command**
+
+help grid
+
+**Set grid values accordingly**
+
+grid 0.46um 0.34um 0.23um 0.17um
+
+![Screenshot 2024-06-02 070847](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/96414c2a-8010-4d7f-b29d-f5b3dd862497)
+
+Checking the conditons
+
+![Screenshot 2024-06-02 070932](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/c8bc4543-55ad-48a3-8009-56511255fef4)
+
+Horizontal track pitch = 0.46 um
+
+![Screenshot 2024-06-02 071829](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/ba84cc53-c807-4b91-be51-c7352480bcc2)
+
+Width of standard cell = 1.38 um = 0.46*3
+
+![Screenshot 2024-06-02 072018](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/57788680-dbdb-4f40-b9a0-0580ffb5bb0f)
+
+Height of the standard cell = 2.72 um = 0.34*8
+
+**Next step is to save the finalized layout with custom name and open it**
+
+**Command to save as**
+
+save sky130_vsdinv.mag
+
+**Command to open custom inverter layout in magic**
+
+magic -T sky130A.tech sky130_vsdinv.mag &
+
+![Screenshot 2024-06-02 072813](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/df7b9179-e7ef-402f-b6e9-99dc744f0356)
+
+Screenshot of newly created lef file
+
+![Screenshot 2024-06-02 073311](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/fb484ad5-9d0a-45fd-800d-65f1607c17a8)
+
+**Now the newly generated lef and associated required lib files to 'picorv32a' design 'src' directory**
+
+To Copy files to picorv32a design src directory
+
+Copy lef file
+
+cp sky130_vsdinv.lef ~/Desktop/work/tools/openlane_working_dir/openlane/designs/picorv32a/src/
+
+List and check whether it's copied
+
+ls ~/Desktop/work/tools/openlane_working_dir/openlane/designs/picorv32a/src/
+
+Copy lib files
+
+cp libs/sky130_fd_sc_hd__* ~/Desktop/work/tools/openlane_working_dir/openlane/designs/picorv32a/src/
+
+List and check whether it's copied
+
+ls ~/Desktop/work/tools/openlane_working_dir/openlane/designs/picorv32a/src/
+
+![Screenshot 2024-06-02 090233](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/7d715be6-fd11-4e8b-b8bc-5986cf286a9b)
+
+Edit config.tcl
+
+![333](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/862f8865-855d-451a-8e75-867ffae0ff31)
+
+Running Openlane flow synthesis with newly inserted custom inverter cell
+
+After running the commands
+
+![Screenshot 2024-06-02 092433](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/10edd2ac-2ff9-4848-b2ae-944fd9b5666e)
+
+![Screenshot 2024-06-02 094657](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/7e9b8597-d837-48df-99d4-10b662fa619a)
+
+
+After running the synthesis we got,
+
+Chip area for module '\picorv32a' : 147712.918400
+
+tns -711.59
+
+wns -23.89
+
+**Commands to view and change parameters to improve timing and run synthesis**
+
+Now once again we have to prep design so as to update variables
+
+prep -design picorv32a -tag 29-05_12-20 -overwrite
+
+Addiitional commands to include newly added lef to openlane flow merged.lef
+
+set lefs [glob $::env(DESIGN_DIR)/src/*.lef]
+
+add_lefs -src $lefs
+
+Command to display current value of variable SYNTH_STRATEGY
+
+echo $::env(SYNTH_STRATEGY)
+
+Command to set new value for SYNTH_STRATEGY
+
+set ::env(SYNTH_STRATEGY) "DELAY 3"
+
+Command to display current value of variable SYNTH_BUFFERING to check whether it's enabled
+
+echo $::env(SYNTH_BUFFERING)
+
+Command to display current value of variable SYNTH_SIZING
+
+echo $::env(SYNTH_SIZING)
+
+Command to set new value for SYNTH_SIZING
+
+set ::env(SYNTH_SIZING) 1
+
+Command to display current value of variable SYNTH_DRIVING_CELL to check whether it's the proper cell or not
+
+echo $::env(SYNTH_DRIVING_CELL)
+
+Now that the design is prepped and ready, we can run synthesis using following command
+
+run_synthesis
+
+`merged.lef` in tmp directoy 
+
+![Screenshot 2024-06-02 115104](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/4114428b-49aa-4e82-aae0-b393f692bce1)
+
+After running the above commands
+
+![Screenshot 2024-06-02 114139](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/0857d36c-864b-4651-8ff9-b229ebef2d62)
+
+Now run the floorplan
+
+![Screenshot 2024-06-02 115454](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/3d96ac1e-64ce-4d66-a318-330e695e92c8)
+
+As we are facing issues in `run_floorplan` command , we will use the below mentioned commands
+
+**Follwing commands are alltogather sourced in "run_floorplan" command**
+
+init_floorplan
+
+place_io
+
+tap_decap_or
+
+![Screenshot 2024-06-02 115713](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/df34aef2-3ca7-45f5-ae06-7a5b62d22d9e)
+
+![Screenshot 2024-06-02 115808](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/400f6238-6577-407e-bb4b-f44776ae9345)
+
+Now `run_placement`
+
+![Screenshot 2024-06-02 120211](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/f1a69bbb-f558-42e8-8ece-2c3534d31f77)
+
+Commands to load placement def in magic in another terminal 
+
+Change directory to path containing generated placement def
+
+cd Desktop/work/tools/openlane_working_dir/openlane/designs/picorv32a/runs/29-05_12-20/results/placement/
+
+Command to load the placement def in magic tool
+
+magic -T /home/vsduser/Desktop/work/tools/openlane_working_dir/pdks/sky130A/libs.tech/magic/sky130A.tech lef read ../../tmp/merged.lef def read picorv32a.placement.def &
+
+![Screenshot 2024-06-02 120824](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/f377c465-dd2a-4e2e-a0e3-f895b469b9cd)
+
+Screenshot of the customer inverter interested in placemnt def with proper abutment
+
+![Screenshot 2024-06-02 121631](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/7152983f-2878-418d-9400-37ac8add780f)
+
+**Command to view internal connectivity layers**
+
+expand
+
+![Screenshot 2024-06-02 121658](https://github.com/chmvs/vsd_openlane_workshop/assets/129481779/47c74ec3-754f-4423-8f7f-11e9d6d81452)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
